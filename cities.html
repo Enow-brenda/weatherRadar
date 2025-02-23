@@ -74,8 +74,8 @@
     }
     async function loadLocationData(){
        
-        if(localStorage.getItem(location)){
-            loc = localStorage.getItem(location)
+        if(localStorage.getItem('location')){
+            loc = localStorage.getItem('location')
             myLoc = await fetchC(loc.split(',')[0],loc.split(',')[1])
             const temp = myLoc.main.temp; // Use the first forecast item
             const description = myLoc.weather[0].description;
