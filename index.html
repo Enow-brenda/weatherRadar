@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WeatherRadar - Main</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+    crossorigin=""/>
+    <script src="assets/js/API_KEY.js"></script>
+
+<!-- Leaflet JavaScript -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+    crossorigin=""></script>
+</head>
+<body class="bg-gradient-to-b from-purple-800 to-indigo-900 text-white flex flex-col items-center">
+    <div class="w-full max-w-md mb-2">
+        <div class=" w-full ">
+            <div class="flex justify-between items-center p-6 ">
+                <h2 class="text-2xl font-bold" id="cityName">...</h2>
+                <button onclick="goToCitySelection()" class="text-xl bg-yellow-500 text-white px-4 py-1 rounded-lg"><i class="fa fa-plus"></i></button>
+            </div>
+        </div>
+        
+        <div class="text-center mt-2 mb-2 p-6 ">
+            <img id="weatherCondition" style="filter: hue-rotate(90deg) brightness(1.2) saturate(2);" src="assets/img/loading-removebg-preview.png" alt="Weather Icon" class=" w-48 h-48 mx-auto">
+            <p style="text-transform: capitalize;" class="text-2xl " id="Description" >...</p>
+            <h1 class="text-5xl font-bold" id="temperature">...° C</h1>
+        </div>
+       
+        <div >
+            <h3 class="text-2xl font-semibold p-6">Today</h3>
+            <div class="flex gap-4  overflow-x-auto py-4 flex-nowrap text-xl" id="forecast-container">
+              ...Loading Data
+            </div>
+        </div>
+        
+        <div class="bg-purple-900 p-4 rounded-lg mt-4 p-6 mx-6">
+            <h3 class="text-2xl font-semibold">5-Day Forecast</h3>
+            <div class="mt-2 text-xl" id="day-forecast-container">
+               
+              ....Loading Data
+            </div>
+        </div>
+        <div class="grid grid-cols-2 gap-2 p-6" id="data-cards">
+           
+            
+        
+            <!-- Precipitation -->
+            <div class="bg-purple-900 rounded-lg p-6  flex items-center gap-6">
+                <i class="fa fa-cloud-showers-heavy text-3xl"></i>
+                <div>
+                    <p class="text-xl" id="pressure">...</p>
+                    <p class="text-lg text-gray-300">Pressure</p>
+                </div>
+            </div>
+        
+            <!-- Humidity -->
+            <div class="bg-purple-900 rounded-lg  p-6 flex items-center gap-6">
+                <i class="fa fa-tint text-3xl "></i>
+                <div>
+                    <p class="text-xl" id="humidity">...</p>
+                    <p class="text-lg text-gray-300">Humidity</p>
+                </div>
+            </div>
+        
+            
+           
+        </div>
+        <section class="py-12 mx-6">
+            <div class="container mx-auto ">
+                <h2 class="text-3xl font-bold text-yellow-400 text-center mb-8">Live Weather Map</h2>
+                <div id="weather-map" class="h-96 rounded-lg overflow-hidden"></div>
+            </div>
+        </section>
+        <footer class="text-white py-6 mt-8">
+            <div class="container mx-auto text-center">
+              
+                <p class="text-gray-300 mt-4">
+                    &copy; 2025 WeatherRadar. All rights reserved.
+                </p>
+        
+                <!-- Attribution for Weather Data -->
+                <p class="text-gray-300 text-sm mt-2">
+                    Weather data provided by <a href="#" class="text-yellow-400 hover:underline">OpenWeatherMap</a>.
+                </p>
+                <p class="text-gray-300 text-sm mt-2">
+                    Created with ❤️ by <a href="#" class="text-yellow-400 hover:underline">Mac Brenda</a>.
+                </p>
+            </div>
+        </footer>
+    </div>
+   
+    <script>
+         const city = localStorage.getItem('selectedCity');
+         
+         const map = L.map('weather-map').setView([city.split(',')[0] , city.split(',')[1]], 13); // Set initial view
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+        function goToCitySelection() {
+            window.location.href = '/cities';
+        }
+       
+        
+        async function fetchForecast(lat,lon) {
+            const url = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric`;
+            try {
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                const data = await response.json();
+                displayRemainingHoursForecast(data);
+                
+            } catch (error) {
+                console.error('Error fetching forecast:', error);
+            }
+        }
+        async function fetchWeather(lat, lon) {
+            
+            const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric`;
+            console.log(url)
+            try {
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                const data = await response.json();
+                console.log(data)
+                return data;
+            } catch (error) {
+                console.error('Error fetching weather data:', error);
+                return null;
+            }
+        }
+
+        async function populateTop(){
+            data = await fetchWeather(city.split(',')[0] , city.split(',')[1])
+            console.log(data.name)
+            document.getElementById('cityName').innerText = data.name
+            document.getElementById('temperature').innerText = data.main.temp + "° C"
+            document.getElementById('Description').innerText = data.weather[0].description
+            document.getElementById('pressure').innerText = data.main.pressure
+            document.getElementById('humidity').innerText = data.main.humidity
+            document.getElementById('weatherCondition').src = `https://openweathermap.org/img/wn/${data.weather[0].icon}.png`;
+           
+
+            data_cards = document.getElementById('data-cards').innerHTML;
+
+            if (data.wind){
+                
+                data_cards +=   `
+                 <div class="bg-purple-900 rounded-lg p-6  flex items-center gap-6">
+                <i class="fa fa-wind text-3xl "></i>
+                <div>
+                    <p class="text-xl" id="wind">${data.wind.speed}</p>
+                    <p class="text-lg text-gray-300">Wind Speed</p>
+                </div>
+            </div>`;
+            document.getElementById('data-cards').innerHTML = data_cards
+            
+               
+            }
+            else if(data.rain){
+                data_cards +=   `
+                <div class="bg-purple-900 rounded-lg  p-6  flex items-center gap-6">
+                <i class="fa fa-cloud-rain text-3xl"></i>
+                <div>
+                    <p class="text-xl">${data.rain['1h']}</p>
+                    <p class="text-lg text-gray-300">Rain (mm)</p>
+                </div>
+            </div>
+            `
+            }
+        }
+        function displayRemainingHoursForecast(forecastData) {
+            console.log(forecastData)
+            const forecastContainer = document.getElementById('forecast-container');
+            forecastContainer.innerHTML = ''; 
+
+            const dayforecastContainer = document.getElementById('day-forecast-container');
+            dayforecastContainer.innerHTML = ''; 
+
+            const now = new Date(); 
+            const currentDay = now.getDate();
+            const myhour = now.getHours()
+
+            const selected= []
+            
+            acc = []
+            const daysForecast = forecastData.list.forEach(item => {
+                
+                const itemDate = new Date(item.dt * 1000); 
+                if (itemDate.getDate() > currentDay ){
+                    var dayKey = itemDate.getDate()
+                    if (!acc[dayKey]) {
+                        acc[dayKey] = []; // Initialize the array for the day
+                    }
+                    acc[dayKey].push(item);
+                    
+                }
+
+            });
+            console.log(acc)
+
+        
+            const remainingHoursForecast = forecastData.list.filter(item => {
+                const itemDate = new Date(item.dt * 1000); 
+                return itemDate.getDate() === currentDay && itemDate > now;
+            });
+
+            if (remainingHoursForecast.length === 0) {
+                forecastContainer.classList.add('justify-center')
+                forecastContainer.innerHTML = '<p class="text-center text-sm text-yellow-500"> No forecast data available for the remaining hours.</p>';
+                return;
+            }
+          
+
+            // Display each forecast item
+            remainingHoursForecast.forEach(item => {
+                const itemDate = new Date(item.dt * 1000);
+                const time = itemDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                const temperature = item.main.temp;
+                const weatherDescription = item.weather[0].description;
+                const icon = item.weather[0].icon;
+
+                const forecastCard = `
+                 <div class="text-center w-[100px] flex-shrink-0">
+                    <p>${time}</p>
+                    <img src="https://openweathermap.org/img/wn/${icon}.png" alt="${weatherDescription}" class="w-10 mx-auto">
+                    <p>${temperature}°C</p>
+                </div>
+    
+                `;
+                forecastContainer.innerHTML += forecastCard;
+            });
+
+
+            const randomForecasts = Object.entries(acc).map(([day, items]) => {
+                // Select a random item from the group
+            const randomItem = items[Math.floor(Math.random() * items.length)];
+            return { day, ...randomItem }; // Return the day and the random item
+            });
+
+            randomForecasts.forEach(item => {
+          
+                const itemDate = new Date(item.dt * 1000);
+                const temperature = item.main.temp;
+                const icon = item.weather[0].icon;
+                const weatherDescription = item.weather[0].description;
+                days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun']
+
+                const dayforecastCard = `
+                <div class="flex justify-between mt-2">
+                    <p>${itemDate.getMonth() + 1}/${itemDate.getDate()}</p>
+                    <p>${days[itemDate.getDay()]}</p>
+                    <div class="flex items-center gap-1">
+                        <p>${temperature}° C</p>
+                       <img src="https://openweathermap.org/img/wn/${icon}.png" alt="${weatherDescription}" class="w-10 mx-auto">
+                    </div>  
+                </div>
+    
+                `;
+                dayforecastContainer.innerHTML += dayforecastCard;
+            });
+        }
+        populateTop()
+        fetchForecast(city.split(',')[0] , city.split(',')[1])
+    </script>
+</body>
+</html>
