@@ -20,7 +20,7 @@ function addCity(name,country,lat, lon) {
 
 // Function to fetch cities from OpenWeatherMap API
 async function fetchCities(query) {
-    const url = `http://api.openweathermap.org/geo/1.0/direct?q=${query}&limit=5&appid=${apiKey}`;
+    const url = `https://api.openweathermap.org/geo/1.0/direct?q=${query}&limit=5&appid=${apiKey}`;
     try {
         const response = await fetch(url);
         const data = await response.json();
